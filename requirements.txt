@@ -1,0 +1,7 @@
+alembic==1.0.0
+celery==4.2.0
+falcon==1.4.1
+psycopg2==2.7.5
+requests==2.19.1
+sqlalchemy==1.2.10
+Werkzeug==0.14.1

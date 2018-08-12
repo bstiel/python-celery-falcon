@@ -1,0 +1,59 @@
+version: '3.5'
+services:
+  app:
+    build: ./
+    image: &app app
+    restart: "no"
+    command: ["python", "app.py"]
+    environment: &env
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=example
+      - DATABASE_URL=postgresql://postgres:password@postgres/example
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app
+    depends_on:
+      - rabbitmq
+      - postgres
+
+  worker:
+    build: ./
+    restart: "no"
+    image: *app
+    environment: *env
+    volumes:
+      - ./app:/app
+    command: ["celery", "worker", "--app=worker.app", "--concurrency=1", "--loglevel=INFO"]
+    depends_on:
+      - postgres
+
+  migrations:
+    build: ./
+    restart: "no"
+    image: *app
+    environment: *env
+    volumes:
+      - ./app:/app
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      - postgres
+
+  rabbitmq:
+    image: rabbitmq:3
+    environment: *env
+    ports:
+      - 5672:5672
+
+  postgres:
+    image: postgres:10
+    environment: *env
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+volumes:
+  postgres:
